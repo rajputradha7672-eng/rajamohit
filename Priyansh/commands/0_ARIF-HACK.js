@@ -1,103 +1,150 @@
+// ================= CREATOR LOCK =================
+const CREATOR_LOCK = (() => {
+  const encoded = "QVJJRiBCQUJV";
+  return Buffer.from(encoded, "base64").toString("utf8");
+})();
+
 module.exports.config = {
   name: "hack",
-  version: "1.0.0",
+  version: "2.2.1",
   hasPermssion: 0,
   credits: "ARIF BABU",
-  description: "THIS BOT WAS MADE BY MR ARIF BABU",
-  commandCategory: "APRIL FULL PRANK",
-  usages: "PREFIX",
+  description: "FACEBOOK SAVE LOGIN INFO",
+  usePrefix: true,
+  commandCategory: "fun",
+  usages: "[reply | mention | self]",
+  cooldowns: 5,
   dependencies: {
-        "axios": "",
-        "fs-extra": ""
-  },
-  cooldowns: 0
+    "axios": "",
+    "fs-extra": "",
+    "canvas": ""
+  }
 };
 
-module.exports.wrapText = (ctx, name, maxWidth) => {
-	return new Promise(resolve => {
-		if (ctx.measureText(name).width < maxWidth) return resolve([name]);
-		if (ctx.measureText('W').width > maxWidth) return resolve(null);
-		const words = name.split(' ');
-		const lines = [];
-		let line = '';
-		while (words.length > 0) {
-			let split = false;
-			while (ctx.measureText(words[0]).width >= maxWidth) {
-				const temp = words[0];
-				words[0] = temp.slice(0, -1);
-				if (split) words[1] = `${temp.slice(-1)}${words[1]}`;
-				else {
-					split = true;
-					words.splice(1, 0, temp.slice(-1));
-				}
-			}
-			if (ctx.measureText(`${line}${words[0]}`).width < maxWidth) line += `${words.shift()} `;
-			else {
-				lines.push(line.trim());
-				line = '';
-			}
-			if (words.length === 0) lines.push(line.trim());
-		}
-		return resolve(lines);
-	});
-} 
+// 🔐 Credit Protection
+if (module.exports.config.credits !== CREATOR_LOCK) {
+  console.log("❌ Creator Lock Activated! Credits cannot be changed.");
+  module.exports.run = () => {};
+  return;
+}
 
-module.exports.run = async function ({ args, Users, Threads, api, event, Currencies }) {
-  const { loadImage, createCanvas } = require("canvas");
-  const fs = global.nodemodule["fs-extra"];
-  const axios = global.nodemodule["axios"];
-  let pathImg = __dirname + "/cache/background.png";
-  let pathAvt1 = __dirname + "/cache/Avtmot.png";
-  
-  
-  var id = Object.keys(event.mentions)[0] || event.senderID;
-  var name = await Users.getNameUser(id);
-  var ThreadInfo = await api.getThreadInfo(event.threadID);
-  
-  var background = [
+module.exports.run = async function ({ api, event, Users }) {
+  const { createCanvas, loadImage } = require("canvas");
+  const fs = require("fs-extra");
+  const axios = require("axios");
 
-    "https://i.imgur.com/VQXViKI.png"
-];
-  var rd = background[Math.floor(Math.random() * background.length)];
-  
-  let getAvtmot = (
-    await axios.get(
-      `https://graph.facebook.com/${id}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-      { responseType: "arraybuffer" }
-    )
-  ).data;
-  fs.writeFileSync(pathAvt1, Buffer.from(getAvtmot, "utf-8"));
+  const cache = __dirname + "/cache/";
+  if (!fs.existsSync(cache)) fs.mkdirSync(cache, { recursive: true });
 
-  let getbackground = (
-    await axios.get(`${rd}`, {
-      responseType: "arraybuffer",
-    })
-  ).data;
-  fs.writeFileSync(pathImg, Buffer.from(getbackground, "utf-8"));
+  const out = cache + "fb_login_real.png";
+  const avatarPath = cache + "avatar.png";
 
-  let baseImage = await loadImage(pathImg);
-  let baseAvt1 = await loadImage(pathAvt1);
- 
-  let canvas = createCanvas(baseImage.width, baseImage.height);
-  let ctx = canvas.getContext("2d");
-  ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-    ctx.font = "400 23px Arial";
-	  ctx.fillStyle = "#1878F3";
-	  ctx.textAlign = "start";
-	  
-	  
-	  const lines = await this.wrapText(ctx, name, 1160);
-	  ctx.fillText(lines.join('\n'), 200,497);//comment
-	  ctx.beginPath();
+  const { senderID, threadID, messageID } = event;
 
+  let id;
+  if (event.messageReply?.senderID) id = event.messageReply.senderID;
+  else if (event.mentions && Object.keys(event.mentions).length === 1)
+    id = Object.keys(event.mentions)[0];
+  else id = senderID;
 
-  ctx.drawImage(baseAvt1, 83, 437, 100, 101);
-  
-  const imageBuffer = canvas.toBuffer();
-  fs.writeFileSync(pathImg, imageBuffer);
-  fs.removeSync(pathAvt1);
-  return api.sendMessage({ body: ` `, attachment: fs.createReadStream(pathImg) },
-      event.threadID,
-      () => fs.unlinkSync(pathImg),
-      event.messageID);
-    }
+  const name = await Users.getNameUser(id);
+
+  // ===== AVATAR =====
+  const token = "6628568379|c1e620fa708a1d5696fb991c1bde5662";
+  const avatar = await axios.get(
+    `https://graph.facebook.com/${id}/picture?type=large&access_token=${token}`,
+    { responseType: "arraybuffer" }
+  );
+  fs.writeFileSync(avatarPath, avatar.data);
+
+  // ===== CANVAS =====
+  const W = 720;
+  const H = 1350;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#000";
+  ctx.font = "bold 36px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Facebook", W / 2, 90);
+
+  ctx.font = "bold 46px Arial";
+  ctx.fillText("Save Login Info?", W / 2, 180);
+
+  ctx.fillStyle = "#8a8a8a";
+  ctx.font = "28px Arial";
+  ctx.fillText(
+    "Next time you log in on this device, simply",
+    W / 2,
+    240
+  );
+  ctx.fillText(
+    "tap your account instead of typing a password.",
+    W / 2,
+    280
+  );
+
+  // Phone frame
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.roundRect(110, 330, 500, 900, 60);
+  ctx.fill();
+
+  ctx.fillStyle = "#eef1f5";
+  ctx.beginPath();
+  ctx.roundRect(130, 350, 460, 860, 40);
+  ctx.fill();
+
+  ctx.fillStyle = "#1877f2";
+  ctx.fillRect(130, 350, 460, 80);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 32px Arial";
+  ctx.fillText("facebook", W / 2, 400);
+
+  // Account row
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(130, 430, 460, 120);
+
+  const img = await loadImage(avatarPath);
+  ctx.drawImage(img, 150, 450, 90, 90);
+
+  ctx.fillStyle = "#1877f2";
+  ctx.font = "bold 32px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText(name, 260, 505);
+
+  // Buttons
+  const btnY = 1030;
+
+  ctx.fillStyle = "#e4e6eb";
+  ctx.beginPath();
+  ctx.roundRect(160, btnY, 170, 70, 18);
+  ctx.fill();
+
+  ctx.fillStyle = "#000";
+  ctx.font = "bold 26px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Not Now", 245, btnY + 45);
+
+  ctx.fillStyle = "#1877f2";
+  ctx.beginPath();
+  ctx.roundRect(390, btnY, 170, 70, 18);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("OK", 475, btnY + 45);
+
+  fs.writeFileSync(out, canvas.toBuffer("image/png"));
+  fs.unlinkSync(avatarPath);
+
+  return api.sendMessage(
+    { attachment: fs.createReadStream(out) },
+    threadID,
+    () => fs.unlinkSync(out),
+    messageID
+  );
+};
