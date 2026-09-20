@@ -31,7 +31,7 @@ module.exports.config = {
     credits: "virat saini",
     hasPermssion: 0,
     cooldowns: 5,
-    description: "YouTube video ko URL ya name se MP4 me download karein",
+    description: "YouTube video ko URL ya name se mp4 me download karein",
     commandCategory: "media",
     usages: "[YouTube URL ya song ka naam]"
 };
